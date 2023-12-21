@@ -1,0 +1,140 @@
+/* app/models/static/main.css */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Full viewport height */
+    padding: 20px;
+    background-color: rgb(255, 255, 255);
+}
+
+
+#title {
+    display: flex;
+    align-items: center;
+    margin: 20px;
+}
+
+h1, h2 {
+    font-family: 'Open Sans', sans-serif;
+    color: rgb(106, 76, 136)bc0;
+}
+
+#chat-box {
+    margin: 20px;
+    padding: 15px;
+    background-color: rgb(115, 115, 115);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 300px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#chat-bot {
+    display: flex;
+    align-items: center;
+    margin: 20px;
+}
+
+#chat-bot input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #4285f4;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #3367d6;
+}
+
+#user-inputs {
+    margin: 20px;
+}
+
+#user-inputs textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+#generate-letter {
+    margin: 20px;
+    text-align: center;
+}
+
+.highlight {
+    background-color: yellow;
+    /* display: inline; */
+}
+
+#content-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+#cover-letter-box {
+    flex: 3; 
+    margin-right: 20px;
+}
+
+.sidebar {
+    flex: 1; 
+    padding: 10px;
+    margin: 5px;
+    text-align: left;
+
+    border-left: 1px solid #ddd;
+}
+
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    section {
+        width: 100%;
+    }
+}
+
+
+textarea, input[type="text"], input[type="file"] {
+    width: 100%; /* Full width of the parent */
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+section {
+    background-color: #ffffff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 80%; /* Adjust as needed */
+    max-width: 600px; /* Maximum width */
+}
+
+#user-inputs, #generate-letter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+

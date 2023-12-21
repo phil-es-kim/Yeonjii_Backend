@@ -1,0 +1,426 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Letter Application</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+</head>
+<body>
+    <header>
+        <h1 id="title" >Yeonjii Backend</h1>
+        <!-- <p>Current GPT Model: {{ gpt_model }}</p> -->
+    </header>
+
+    <!-- <h2 id="title" >Chat with our AI Assistant</h2>
+    <div id="chat-box"> -->
+        <!-- Messages will be displayed here -->
+    <!-- </div> -->
+
+    <!-- <div id="chat-bot">
+        <input type="text" id="user-message" placeholder="Type your message here...">
+        <button onclick="sendMessage()">Send</button>
+    </div> -->
+
+    <section id="user-inputs">
+        <h2>Save your job information</h2>
+        <form id="job-form">
+            <textarea id="job-description-text" placeholder="Paste the job description here"></textarea>
+            <textarea id="job-role-text" placeholder="Paste the job role here"></textarea>
+            <textarea id="company-text" placeholder="Paste the company here"></textarea>
+            <textarea id="story-text" placeholder="Write your professional story here"></textarea>
+        </form>
+        <button onclick="saveAll()">Save All</button>
+    </section>
+
+    <section id="user-inputs">
+        <h2>Save your resume</h2>
+        <form id="resume-form">
+            <textarea id="resume-text" placeholder="Paste your resume"></textarea>
+            <button onclick="saveResume()">Save Resume</button>
+            <input type="file" id="resume-file" accept=".pdf"/>
+            <button onclick="uploadPDF()">Upload PDF Resume</button>
+        </form>
+        <!-- <textarea id="job-url-text" placeholder="Paste your job url"></textarea>
+        <button onclick="saveJobUrl()">Save job Url</button>
+        <button onclick="extractAndSave()">Extract and save job data</button> -->
+    </section>
+
+    <section>
+        <div id="generate-letter"><button onclick="generateCoverLetter()">Generate Cover Letter</button></div>
+        <section id="content-container">
+            <div id="cover-letter-box">...</div>
+            <div id="grammar-issues-box" class="sidebar">...</div>
+          </section>
+        <button id="apply-corrections-button" onclick="applyCorrections()">Apply Corrections</button>
+        <button onclick="checkAndDisplayGrammar()">Check Grammar</button>
+    </section>
+    
+
+    <script type="text/javascript">
+        var sessionId = '';
+
+        function getSessionId() {
+            fetch('/get_session_id')
+                .then(response => response.json())
+                .then(data => {
+                    sessionId = data.session_id;
+                    console.log('Session ID:', sessionId);
+                })
+                .catch(error => console.error('Error fetching session ID:', error));
+        }
+
+        window.onload = getSessionId;
+
+        function saveAll() {
+            saveJobDescription();
+            saveJobRole();
+            saveCompany();
+            saveStory();
+
+            // Optionally, clear the form fields after saving
+            // document.getElementById('job-form').reset();
+        }
+
+        function sendTextToBackend(text) {
+            return fetch('/check_grammar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({text: text}),
+            })
+            .then(response => response.json());
+        }
+
+        function fetchCorrections(sessionId) {
+            fetch('/get_cover_letter_corrections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({session_id: sessionId}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display tone, clarity, etc., corrections in different UI elements
+            });
+        }
+
+        // function updateCoverLetterWithIssues(coverLetter, grammarIssues) {
+        //     let modifiedCoverLetter = coverLetter.replace(/\n/g, '<br>'); // Replace newlines with <br>
+
+        //     // Sort the issues by start position in descending order
+        //     const sortedIssues = grammarIssues.sort((a, b) => b.start_pos - a.start_pos);
+
+        //     sortedIssues.forEach(issue => {
+        //         const issueText = modifiedCoverLetter.substring(issue.start_pos, issue.end_pos);
+        //         const highlightedText = `<span class="highlight">${issueText}</span>`;
+        //         // Replace the text in the cover letter
+        //         modifiedCoverLetter = modifiedCoverLetter.substring(0, issue.start_pos) + 
+        //                             highlightedText + 
+        //                             modifiedCoverLetter.substring(issue.end_pos);
+        //     });
+
+        //     document.getElementById('cover-letter-box').innerHTML = modifiedCoverLetter; // Use innerHTML instead of innerText
+        // }
+
+        function applyCorrections() {
+            let correctedCoverLetter = window.coverLetterText;
+            window.grammarIssuesData.forEach(issue => {
+                const issueText = correctedCoverLetter.substring(issue.start_pos, issue.end_pos);
+                const correction = issue.suggestions[0];
+                correctedCoverLetter = correctedCoverLetter.replace(issueText, correction);
+            });
+            document.getElementById('cover-letter-box').innerHTML = correctedCoverLetter.replace(/\n/g, '<br>');
+        }
+
+        // Function to display grammar issues without highlighting
+        function displayGrammarIssues(grammarIssues) {
+        const issuesBox = document.getElementById('grammar-issues-box');
+        issuesBox.innerHTML = ''; // Clear previous issues
+        grammarIssues.forEach(issue => {
+            const issueElement = document.createElement('div');
+            issueElement.innerHTML = `
+            <strong>Issue:</strong> ${issue.hint}<br>
+            <strong>Suggestion:</strong> ${issue.suggestions.join(", ")}
+            `;
+            issuesBox.appendChild(issueElement);
+        });
+        }
+
+        // Function to check grammar and display issues, without highlighting
+        function checkAndDisplayGrammar() {
+        sendTextToBackend(window.coverLetterText)
+            .then(data => {
+            // Assuming data contains grammar issues
+            displayGrammarIssues(data.grammar_issues);
+
+            // Remove the line that highlights issues:
+            // updateCoverLetterWithIssues(window.coverLetterText, data.grammar_issues);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+
+        function sendMessage() {
+            var userMessage = document.getElementById('user-message').value;
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userMessage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var chatBox = document.getElementById('chat-box');
+                var aiResponseDiv = document.createElement('div');
+                aiResponseDiv.innerHTML = `<strong>AI:</strong> ${data.response}`;
+                chatBox.appendChild(aiResponseDiv);
+
+                var userMessageDiv = document.createElement('div');
+                userMessageDiv.innerHTML = `<strong>You:</strong> ${userMessage}`;
+                chatBox.appendChild(userMessageDiv);
+
+                document.getElementById('user-message').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function generateCoverLetter() {
+            var resume = document.getElementById('resume-text').value;
+            var jobDescription = document.getElementById('job-description-text').value;
+            var jobRole = document.getElementById('job-role-text').value;
+            var company = document.getElementById('company-text').value;
+
+            fetch('/generate_letter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    session_id: sessionId,
+                    resume: resume, 
+                    job_description: jobDescription, 
+                    job_role: jobRole, 
+                    company: company 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Response data:", data);
+                if (data.error) {
+                    console.error('Server error:', data.error);
+                    // Handle error display in UI here
+                } else {
+                    var coverLetterBox = document.getElementById('cover-letter-box');
+                    coverLetterBox.innerText = data.cover_letter;
+
+                    // Update the global variable with the cover letter data
+                    window.coverLetterText = data.cover_letter;
+
+                    // Call the function to highlight issues
+                    // updateCoverLetterWithIssues(window.coverLetterText);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function saveResume() {
+            var resume = document.getElementById('resume-text').value;
+
+            fetch('/set_resume', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    session_id: sessionId,
+                    resume: resume 
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                // Additional user feedback here
+                document.getElementById('resume-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function uploadPDF() {
+            var formData = new FormData();
+            var file = document.getElementById('resume-file').files[0];
+            formData.append('resume', file);
+            formData.append('session_id', sessionId);
+
+            fetch('/upload_resume', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function saveJobDescription() {
+            var job_description = document.getElementById('job-description-text').value;
+
+            fetch('/set_job_description', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    session_id: sessionId,
+                    job_description: job_description
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                // Additional user feedback here
+                document.getElementById('job-description-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function saveJobRole() {
+            var job_role = document.getElementById('job-role-text').value;
+
+            fetch('/set_job_role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    session_id: sessionId,
+                    job_role: job_role 
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                // Additional user feedback here
+                document.getElementById('job-role-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function saveCompany() {
+            var company = document.getElementById('company-text').value;
+
+            fetch('/set_company', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    session_id: sessionId,
+                    company: company 
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                // Additional user feedback here
+                document.getElementById('company-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function saveStory() {
+            var story = document.getElementById('story-text').value;
+
+            fetch('/set_story', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    session_id: sessionId,
+                    story: story 
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                // Additional user feedback here
+                document.getElementById('story-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+        document.getElementById('apply-corrections-button').addEventListener('click', applyCorrections);
+        });
+
+</script>
+</body>
+</html>
+
+<!-- // function saveJobUrl() {
+    //     var job_url = document.getElementById('job-url-text').value;
+
+    //     fetch('/set_job_url', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: JSON.stringify({ 
+    //             session_id: sessionId,
+    //             job_url: job_url 
+    //         })
+    //     }).then(response => response.json())
+    //     .then(data => {
+    //         console.log(data.message);
+    //         // Additional user feedback here
+    //         document.getElementById('job-url-text').value = '';
+    //     })
+    //     .catch(error => console.error('Error:', error));
+    // }
+
+// function extractAndSave() {
+    //     if (!sessionId) {
+    //         console.error("Session ID is missing");
+    //         return;
+    //     }
+    //     fetch('/extract_and_save', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: JSON.stringify({ session_id: sessionId })
+    //     })
+    //     .then(response => {
+    //         if (!response.ok) {
+    //             throw new Error(`HTTP error! status: ${response.status}`);
+    //         }
+    //         return response.json();
+    //     })
+    //     .then(data => {
+    //         console.log(data.message);
+    //     })
+    //     .catch(error => console.error('Error:', error));
+    // } -->
+
+
+<!-- // function scrapeAndSave() {
+//     var job_url = document.getElementById('job-url-text').value;
+
+//     fetch('/scrape_and_save', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify({ 
+//             session_id: sessionId,
+//             url: job_url 
+//         })
+//     })
+//     .then(response => response.json())
+//     .then(data => {
+//         console.log(data.message);
+//         // Additional feedback or actions
+//     })
+//     .catch(error => console.error('Error:', error));
+// } -->
